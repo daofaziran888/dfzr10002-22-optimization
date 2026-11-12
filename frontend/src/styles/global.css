@@ -33,3 +33,36 @@ body { margin: 0; background: #f6f8fb; color: #1f2937; }
 .link { border: none; background: none; color: var(--brand); cursor: pointer; padding: 0; }
 .page-foot { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--muted); }
 .error-text { color: #b42318; }
+
+/* 全局筛选器：有效筛选条与运行态 */
+.effective-filter { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 14px; }
+.effective-filter-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.effective-filter-head h3 { margin: 0; font-size: 14px; }
+.filter-card-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.filter-card { flex: 1 1 220px; border: 1px solid var(--border); border-radius: 8px; padding: 10px; background: #fbfdff; }
+.filter-card-warning { border-color: #d97706; background: #fffbeb; }
+.filter-card-head { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.filter-card-code { font-weight: 600; color: #1f2937; }
+.filter-card-value { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.filter-card-value strong { font-size: 16px; }
+.filter-card select, .filter-card .filter-item input { width: 100%; margin-bottom: 6px; }
+.filter-card-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); }
+.tag { font-size: 11px; padding: 1px 7px; border-radius: 10px; white-space: nowrap; }
+.tag-user { background: #e0e7ff; color: #3730a3; }
+.tag-default { background: #ecfdf5; color: #047857; }
+.notice-banner { background: #fffbeb; border: 1px solid #f59e0b; color: #92400e; border-radius: 6px; padding: 8px 10px; font-size: 13px; margin-bottom: 10px; }
+.warning-text { color: #b45309; font-size: 12px; margin: 4px 0 0; }
+.section-title { font-size: 14px; margin: 16px 0 8px; }
+.row-warning { background: #fffbeb; }
+.row-highlight { background: #eff6ff; }
+.filter-item-grow { flex: 2 1 260px; }
+.filter-bar select, .filter-bar input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; min-width: 160px; }
+.editor-panel { border: 1px solid var(--border); border-radius: 8px; background: #fff; padding: 14px; margin: 14px 0; }
+.editor-grid { display: flex; gap: 12px; flex-wrap: wrap; }
+.editor-actions { display: flex; gap: 8px; margin: 10px 0; }
+.rule-list { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.rule-list li { display: flex; flex-direction: column; gap: 2px; font-size: 12px; border-radius: 6px; padding: 6px 8px; }
+.rule-pass { background: #ecfdf5; color: #065f46; }
+.rule-fail { background: #fef2f2; color: #991b1b; }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+.link:disabled { color: var(--muted); }

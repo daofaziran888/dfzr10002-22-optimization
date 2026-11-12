@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { request } from '@/api/client'
+import EffectiveFilterBar from '@/components/EffectiveFilterBar'
+import { useFilterState } from '@/state/FilterContext'
 
 const ENDPOINT = '/api/export'
 const columns = [
@@ -11,7 +13,8 @@ const columns = [
   "字段选择",
   "筛选参数",
   "导出上限",
-  "是否启用"
+  "是否启用",
+  "生效筛选"
 ]
 const actions = [
   "提交校验",
@@ -39,7 +42,7 @@ const stats = [
   }
 ]
 
-type Row = Record<string, string | number | null>
+type Row = Record<string, string | number | null | string[]>
 
 export default function ExportView() {
   const [rows, setRows] = useState<Row[]>([])
@@ -47,6 +50,9 @@ export default function ExportView() {
   const [errorMessage, setErrorMessage] = useState('')
   const [filters, setFilters] = useState<Record<string, string>>({})
   const filterFields = useMemo(() => columns.slice(0, 3), [])
+  // 导出任务清单跟着当前有效筛选变化，筛选状态版本一动就重新拉取
+  const { filters: globalFilters } = useFilterState()
+  const filterVersion = globalFilters.reduce((max, item) => Math.max(max, item.version), 0)
 
   const reload = useCallback(async () => {
     setErrorMessage('')
@@ -66,7 +72,7 @@ export default function ExportView() {
 
   useEffect(() => {
     void reload()
-  }, [reload])
+  }, [reload, filterVersion])
 
   async function runAction(action: string, row: Row) {
     setErrorMessage('')
@@ -89,7 +95,7 @@ export default function ExportView() {
       <header className="page-head">
         <div>
           <h2>数据导出配置管理</h2>
-          <p className="page-desc">维护分析结果的导出模板、格式配置与行数控制，实现分析数据灵活输出。</p>
+          <p className="page-desc">维护分析结果的导出模板、格式配置与行数控制。导出任务清单与导出结果跟随全局筛选器当前有效值同步变化。</p>
         </div>
         <div className="page-actions">
           <button className="btn primary" type="button" onClick={() => setErrorMessage('导出模板登记入口尚未接入审批流')}>
@@ -100,6 +106,8 @@ export default function ExportView() {
           </button>
         </div>
       </header>
+
+      <EffectiveFilterBar />
 
       <div className="stat-row">
         {stats.map((item) => (
@@ -135,7 +143,13 @@ export default function ExportView() {
         <tbody>
           {rows.map((row) => (
             <tr key={String(row.id)}>
-              {columns.map((column) => <td key={column}>{row[column] ?? '—'}</td>)}
+              {columns.map((column) => (
+                <td key={column}>
+                  {column === '生效筛选'
+                    ? (Array.isArray(row[column]) ? (row[column] as string[]).join('；') : '—')
+                    : (row[column] ?? '—')}
+                </td>
+              ))}
               <td className="row-actions">
                 {actions.map((action) => (
                   <button key={action} className="link" type="button" onClick={() => void runAction(action, row)}>

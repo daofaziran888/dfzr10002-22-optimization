@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, Route, Routes } from 'react-router-dom'
 
+import { FilterProvider } from './state/FilterContext'
 import Overview from './views/Overview'
 import IndicatorView from './views/indicator'
 import DatasourceView from './views/datasource'
@@ -25,42 +26,44 @@ export default function App() {
   const [operator] = useState('值班管理员')
 
   return (
-    <div className="app-shell">
-      <aside className="app-side">
-        <h1 className="app-title">数据分析工作台</h1>
-        <nav className="nav-list">
-          {navItems.map((item) => (
-            <Link key={item.path} to={item.path} className="nav-item">
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-      </aside>
-      <main className="app-main">
-        <header className="app-head">
-          <span className="head-desc">面向企业数据分析师与数据产品经理的一站式数据分析工作台。提供指标口径管理、聚合查询、分析实验设计、数据服务发布与应用集成的完整链路。</span>
-          <span className="head-user">当前值班：{operator}</span>
-        </header>
-        <Routes>
-          <Route path="/" element={<Overview />} />
-          <Route path="/indicator" element={<IndicatorView />} />
-          <Route path="/datasource" element={<DatasourceView />} />
-          <Route path="/query" element={<QueryView />} />
-          <Route path="/experiment" element={<ExperimentView />} />
-          <Route path="/dataset" element={<DatasetView />} />
-          <Route path="/chart" element={<ChartView />} />
-          <Route path="/report" element={<ReportView />} />
-          <Route path="/service" element={<ServiceView />} />
-          <Route path="/dashboard" element={<DashboardView />} />
-          <Route path="/dimension" element={<DimensionView />} />
-          <Route path="/filter" element={<FilterView />} />
-          <Route path="/schedule" element={<ScheduleView />} />
-          <Route path="/export" element={<ExportView />} />
-          <Route path="/cache" element={<CacheView />} />
-          <Route path="/model" element={<ModelView />} />
-          <Route path="/log" element={<LogView />} />
-        </Routes>
-      </main>
-    </div>
+    <FilterProvider>
+      <div className="app-shell">
+        <aside className="app-side">
+          <h1 className="app-title">数据分析工作台</h1>
+          <nav className="nav-list">
+            {navItems.map((item) => (
+              <Link key={item.path} to={item.path} className="nav-item">
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </aside>
+        <main className="app-main">
+          <header className="app-head">
+            <span className="head-desc">面向企业数据分析师与数据产品经理的一站式数据分析工作台。提供指标口径管理、聚合查询、分析实验设计、数据服务发布与应用集成的完整链路。</span>
+            <span className="head-user">当前值班：{operator}</span>
+          </header>
+          <Routes>
+            <Route path="/" element={<Overview />} />
+            <Route path="/indicator" element={<IndicatorView />} />
+            <Route path="/datasource" element={<DatasourceView />} />
+            <Route path="/query" element={<QueryView />} />
+            <Route path="/experiment" element={<ExperimentView />} />
+            <Route path="/dataset" element={<DatasetView />} />
+            <Route path="/chart" element={<ChartView />} />
+            <Route path="/report" element={<ReportView />} />
+            <Route path="/service" element={<ServiceView />} />
+            <Route path="/dashboard" element={<DashboardView />} />
+            <Route path="/dimension" element={<DimensionView />} />
+            <Route path="/filter" element={<FilterView />} />
+            <Route path="/schedule" element={<ScheduleView />} />
+            <Route path="/export" element={<ExportView />} />
+            <Route path="/cache" element={<CacheView />} />
+            <Route path="/model" element={<ModelView />} />
+            <Route path="/log" element={<LogView />} />
+          </Routes>
+        </main>
+      </div>
+    </FilterProvider>
   )
 }

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { request } from '@/api/client'
+import EffectiveFilterBar from '@/components/EffectiveFilterBar'
+import { useFilterState } from '@/state/FilterContext'
 
 const ENDPOINT = '/api/chart'
 const columns = [
@@ -11,7 +13,8 @@ const columns = [
   "横轴字段",
   "纵轴字段",
   "筛选条件",
-  "刷新间隔"
+  "刷新间隔",
+  "生效筛选"
 ]
 const actions = [
   "提交校验",
@@ -39,7 +42,7 @@ const stats = [
   }
 ]
 
-type Row = Record<string, string | number | null>
+type Row = Record<string, string | number | null | string[]>
 
 export default function ChartView() {
   const [rows, setRows] = useState<Row[]>([])
@@ -47,6 +50,9 @@ export default function ChartView() {
   const [errorMessage, setErrorMessage] = useState('')
   const [filters, setFilters] = useState<Record<string, string>>({})
   const filterFields = useMemo(() => columns.slice(0, 3), [])
+  // 全局筛选状态版本变化时重新拉取清单，保证「生效筛选」列与看板当前值一致
+  const { filters: globalFilters } = useFilterState()
+  const filterVersion = globalFilters.reduce((max, item) => Math.max(max, item.version), 0)
 
   const reload = useCallback(async () => {
     setErrorMessage('')
@@ -66,7 +72,7 @@ export default function ChartView() {
 
   useEffect(() => {
     void reload()
-  }, [reload])
+  }, [reload, filterVersion])
 
   async function runAction(action: string, row: Row) {
     setErrorMessage('')
@@ -89,7 +95,7 @@ export default function ChartView() {
       <header className="page-head">
         <div>
           <h2>可视化图表配置管理</h2>
-          <p className="page-desc">维护可视化图表的类型选择、数据绑定与样式配置，实现分析结果可视化。</p>
+          <p className="page-desc">维护可视化图表的类型选择、数据绑定与样式配置，实现分析结果可视化。图表配置清单随全局筛选器当前有效值同步刷新。</p>
         </div>
         <div className="page-actions">
           <button className="btn primary" type="button" onClick={() => setErrorMessage('图表配置登记入口尚未接入审批流')}>
@@ -100,6 +106,8 @@ export default function ChartView() {
           </button>
         </div>
       </header>
+
+      <EffectiveFilterBar />
 
       <div className="stat-row">
         {stats.map((item) => (
@@ -134,8 +142,14 @@ export default function ChartView() {
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={String(row.id)}>
-              {columns.map((column) => <td key={column}>{row[column] ?? '—'}</td>)}
+            <tr key={String(row.id)} className={row.图表编号 === 'CFG-0007' ? 'row-highlight' : ''}>
+              {columns.map((column) => (
+                <td key={column}>
+                  {column === '生效筛选'
+                    ? (Array.isArray(row[column]) ? (row[column] as string[]).join('；') : '—')
+                    : (row[column] ?? '—')}
+                </td>
+              ))}
               <td className="row-actions">
                 {actions.map((action) => (
                   <button key={action} className="link" type="button" onClick={() => void runAction(action, row)}>

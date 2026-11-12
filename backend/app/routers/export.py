@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas import ActionResult, EntryPayload, PageResult
+from app.services.downstream import annotate_rows, effective_filter_context
 from app.services.export import ExportService
 
 router = APIRouter(prefix="/api/export", tags=["数据导出配置"])
@@ -27,7 +28,23 @@ def list_entries(
     if size > 200:
         raise HTTPException(status_code=400, detail="每页最多 200 条，请缩小分页范围")
     items, total = service.list_entries(keyword=keyword, status=status, page=page, size=size)
-    return PageResult(items=items, total=total, page=page, size=size)
+    # 导出任务清单跟着当前有效筛选变化，筛选参数一列始终反映筛选器当前值
+    return PageResult(items=annotate_rows(items), total=total, page=page, size=size)
+
+
+# 固定子路径必须声明在 /{entry_id} 之前，否则会被整型路径参数拦截
+@router.get("/filter-context")
+def get_filter_context() -> dict[str, Any]:
+    """导出任务读取的有效筛选上下文：与图表配置、数据看板保持同一份当前值。"""
+    return effective_filter_context()
+
+
+@router.get("/export")
+def export_entries() -> dict[str, Any]:
+    """导出任务清单：导出结果与筛选器当前有效值同步，切换或清空后立即反映新值。"""
+    items, total = service.list_entries(page=1, size=10000)
+    context = effective_filter_context()
+    return {"module": "export", "total": total, "filterContext": context, "items": annotate_rows(items)}
 
 
 @router.get("/{entry_id}", response_model=dict)
@@ -56,10 +73,3 @@ def run_action(entry_id: int, payload: EntryPayload) -> ActionResult:
     if entry is None:
         return ActionResult(ok=False, message=message)
     return ActionResult(ok=True, message=message, entry=entry)
-
-
-@router.get("/export")
-def export_entries() -> dict[str, Any]:
-    """导出数据导出配置清单：返回当前过滤条件下的全量数据。"""
-    items, total = service.list_entries(page=1, size=10000)
-    return {"module": "export", "total": total, "items": items}

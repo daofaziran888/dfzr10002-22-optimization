@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { request } from '@/api/client'
+import EffectiveFilterBar from '@/components/EffectiveFilterBar'
+import { useFilterState } from '@/state/FilterContext'
 
 const ENDPOINT = '/api/dashboard'
 const columns = [
@@ -11,7 +13,8 @@ const columns = [
   "刷新频率",
   "可见范围",
   "创建人",
-  "是否展示"
+  "是否展示",
+  "生效筛选"
 ]
 const actions = [
   "提交校验",
@@ -39,7 +42,7 @@ const stats = [
   }
 ]
 
-type Row = Record<string, string | number | null>
+type Row = Record<string, string | number | null | string[]>
 
 export default function DashboardView() {
   const [rows, setRows] = useState<Row[]>([])
@@ -47,6 +50,9 @@ export default function DashboardView() {
   const [errorMessage, setErrorMessage] = useState('')
   const [filters, setFilters] = useState<Record<string, string>>({})
   const filterFields = useMemo(() => columns.slice(0, 3), [])
+  // 看板与图表配置读取同一份筛选状态，版本变化即刷新，面板当前值始终有效
+  const { filters: globalFilters } = useFilterState()
+  const filterVersion = globalFilters.reduce((max, item) => Math.max(max, item.version), 0)
 
   const reload = useCallback(async () => {
     setErrorMessage('')
@@ -66,7 +72,7 @@ export default function DashboardView() {
 
   useEffect(() => {
     void reload()
-  }, [reload])
+  }, [reload, filterVersion])
 
   async function runAction(action: string, row: Row) {
     setErrorMessage('')
@@ -89,7 +95,7 @@ export default function DashboardView() {
       <header className="page-head">
         <div>
           <h2>数据看板管理</h2>
-          <p className="page-desc">维护数据看板的面板布局、图表组合与可见范围，实现分析结果集中展示。</p>
+          <p className="page-desc">维护数据看板的面板布局、图表组合与可见范围，实现分析结果集中展示。面板（含 DASH-0005）只读取全局筛选器当前有效值。</p>
         </div>
         <div className="page-actions">
           <button className="btn primary" type="button" onClick={() => setErrorMessage('看板面板登记入口尚未接入审批流')}>
@@ -100,6 +106,8 @@ export default function DashboardView() {
           </button>
         </div>
       </header>
+
+      <EffectiveFilterBar />
 
       <div className="stat-row">
         {stats.map((item) => (
@@ -134,8 +142,14 @@ export default function DashboardView() {
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={String(row.id)}>
-              {columns.map((column) => <td key={column}>{row[column] ?? '—'}</td>)}
+            <tr key={String(row.id)} className={row.面板编号 === 'DASH-0005' ? 'row-highlight' : ''}>
+              {columns.map((column) => (
+                <td key={column}>
+                  {column === '生效筛选'
+                    ? (Array.isArray(row[column]) ? (row[column] as string[]).join('；') : '—')
+                    : (row[column] ?? '—')}
+                </td>
+              ))}
               <td className="row-actions">
                 {actions.map((action) => (
                   <button key={action} className="link" type="button" onClick={() => void runAction(action, row)}>

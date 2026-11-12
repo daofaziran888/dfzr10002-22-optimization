@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.schemas import ActionResult, EntryPayload, PageResult
 from app.services.chart import ChartService
+from app.services.downstream import annotate_rows, effective_filter_context
 
 router = APIRouter(prefix="/api/chart", tags=["可视化图表配置"])
 
@@ -27,7 +28,22 @@ def list_entries(
     if size > 200:
         raise HTTPException(status_code=400, detail="每页最多 200 条，请缩小分页范围")
     items, total = service.list_entries(keyword=keyword, status=status, page=page, size=size)
-    return PageResult(items=items, total=total, page=page, size=size)
+    # 图表配置清单随全局筛选器的当前有效值同步刷新，CFG-0007 等配置只能读到有效选择
+    return PageResult(items=annotate_rows(items), total=total, page=page, size=size)
+
+
+@router.get("/filter-context")
+def get_filter_context() -> dict[str, Any]:
+    """图表配置读取的有效筛选上下文：与数据看板、导出任务保持同一份当前值。"""
+    return effective_filter_context()
+
+
+@router.get("/export")
+def export_entries() -> dict[str, Any]:
+    """导出图表配置清单：结果与筛选器当前有效值同步，失效默认值不会出现在导出里。"""
+    items, total = service.list_entries(page=1, size=10000)
+    context = effective_filter_context()
+    return {"module": "chart", "total": total, "filterContext": context, "items": annotate_rows(items)}
 
 
 @router.get("/{entry_id}", response_model=dict)
@@ -56,10 +72,3 @@ def run_action(entry_id: int, payload: EntryPayload) -> ActionResult:
     if entry is None:
         return ActionResult(ok=False, message=message)
     return ActionResult(ok=True, message=message, entry=entry)
-
-
-@router.get("/export")
-def export_entries() -> dict[str, Any]:
-    """导出可视化图表配置清单：返回当前过滤条件下的全量数据。"""
-    items, total = service.list_entries(page=1, size=10000)
-    return {"module": "chart", "total": total, "items": items}
